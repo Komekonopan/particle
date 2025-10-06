@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプル恋愛ノベルゲーム</title>
+    <style>
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background-color: #f0f0f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            width: 800px;
+            height: 600px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        #background-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            transition: opacity 1s;
+        }
+        #character-image {
+            position: absolute;
+            bottom: 100px;
+            right: 50px;
+            max-height: 450px;
+            transition: opacity 0.5s;
+        }
+        #text-box {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            cursor: pointer; /* クリックで次へ進むことを示す */
+        }
+        #speaker-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff99ff; /* ヒロインカラー */
+            margin-bottom: 5px;
+        }
+        #dialogue-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        #choices-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+        }
+        .choice-button {
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        .choice-button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+        }
+        .end-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 2em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="gameContainer">
+        <img id="background-image" src="" alt="背景">
+        <img id="character-image" src="" alt="キャラクター">
+
+        <div id="text-box" onclick="nextScene()">
+            <div id="speaker-name"></div>
+            <div id="dialogue-text">クリックしてゲームスタート</div>
+        </div>
+
+        <div id="choices-area" style="display:none;">
+            </div>
+    </div>
+
+    <script>
+        // **********************************************
+        // 1. シナリオデータ
+        // **********************************************
+        const SCENES = {
+            'start': {
+                bg: 'https://via.placeholder.com/800x600/b0e0e6/FFFFFF?text=学園+中庭',
+                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=ヒロイン',
+                name: '主人公',
+                text: '（高校に入学して数日。まだ友達もいないな...）',
+                next: 'scene1'
+            },
+            'scene1': {
+                name: '???',
+                text: 'あの、すみません！これを落としましたよ。',
+                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=ヒロイン',
+                next: 'scene2'
+            },
+            'scene2': {
+                name: '主人公',
+                text: 'あ、生徒手帳だ！ありがとうございます...って、あなたは？',
+                next: 'scene3'
+            },
+            'scene3': {
+                name: 'ヒロイン (桜井 遥)',
+                text: '私、1年A組の桜井遥です。あなたは？',
+                next: 'choice1'
+            },
+            
+            // **********************************************
+            // 2. 選択肢パート
+            // **********************************************
+            'choice1': {
+                name: '主人公',
+                text: '（ここでどう答えるか...）',
+                choices: [
+                    { text: 'A. 落ち着いて、丁寧に自己紹介をする', next: 'path_A' },
+                    { text: 'B. 照れながら、少しぶっきらぼうに答える', next: 'path_B' }
+                ],
+                // 選択肢では text-box を非表示にする
+                hideTextBox: true
+            },
+
+            // **********************************************
+            // 3. ルート分岐 (Aルート)
+            // **********************************************
+            'path_A': {
+                name: '主人公',
+                text: '1年B組の佐藤です。助かりました、お礼に何かさせてください！',
+                next: 'path_A_2'
+            },
+            'path_A_2': {
+                name: '桜井 遥',
+                text: 'えっ、そんな。大丈夫ですよ！でも...もしよかったら、今度一緒に購買に行きませんか？ (好感度UP！)',
+                next: 'ending_good'
+            },
+
+            // **********************************************
+            // 4. ルート分岐 (Bルート)
+            // **********************************************
+            'path_B': {
+                name: '主人公',
+                text: '...佐藤だけど。手帳、ありがとう。',
+                next: 'path_B_2'
+            },
+            'path_B_2': {
+                name: '桜井 遥',
+                text: 'そ、そう...。ちょっと怖かったけど、手帳が見つかってよかった。じゃあね...。 (好感度DOWN)',
+                next: 'ending_bad'
+            },
+
+            // **********************************************
+            // 5. エンディング
+            // **********************************************
+            'ending_good': {
+                bg: 'https://via.placeholder.com/800x600/8fbc8f/FFFFFF?text=放課後+デート',
+                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=笑顔の遥',
+                name: 'ナレーター',
+                text: 'その後、二人は親しくなり、幸せな学園生活を送りました。**HAPPY END**',
+                end: true
+            },
+            'ending_bad': {
+                bg: 'https://via.placeholder.com/800x600/a9a9a9/FFFFFF?text=暗い教室',
+                char: '', // キャラクター画像を消す
+                name: 'ナレーター',
+                text: '結局、その後彼女と話す機会は訪れなかった...。**BAD END**',
+                end: true
+            }
+        };
+
+        // **********************************************
+        // 2. ゲーム本体ロジック
+        // **********************************************
+        let currentSceneKey = 'start';
+
+        const dom = {
+            bg: document.getElementById('background-image'),
+            char: document.getElementById('character-image'),
+            name: document.getElementById('speaker-name'),
+            text: document.getElementById('dialogue-text'),
+            textBox: document.getElementById('text-box'),
+            choices: document.getElementById('choices-area'),
+            container: document.getElementById('gameContainer')
+        };
+
+        /**
+         * 現在のシーンを表示する
+         * @param {string} key シーンのキー (SCENESのキー)
+         */
+        function showScene(key) {
+            currentSceneKey = key;
+            const scene = SCENES[key];
+
+            if (!scene) {
+                console.error("シーンが見つかりません:", key);
+                return;
+            }
+            
+            // 終了判定
+            if (scene.end) {
+                showEnding(scene);
+                return;
+            }
+            
+            // 選択肢がある場合は選択肢を表示
+            if (scene.choices) {
+                renderChoices(scene);
+                return;
+            }
+
+            // 画像の更新 (定義されている場合のみ)
+            if (scene.bg) {
+                dom.bg.src = scene.bg;
+            }
+            // キャラクター画像の更新
+            if (scene.char !== undefined) {
+                dom.char.src = scene.char;
+                dom.char.style.opacity = scene.char ? '1' : '0'; // 画像がない場合は非表示
+            } else if (dom.char.src) {
+                 dom.char.style.opacity = '1'; // 定義なしなら前シーンの画像を保持
+            }
+
+            // テキストボックスの表示
+            dom.textBox.style.display = 'block';
+            dom.choices.style.display = 'none';
+
+            dom.name.textContent = scene.name;
+            dom.text.textContent = scene.text;
+        }
+
+        /**
+         * 次のシーンに進む (クリック時)
+         */
+        function nextScene() {
+            const currentScene = SCENES[currentSceneKey];
+            
+            // 選択肢が表示されている場合は何もしない
+            if (currentScene.choices) return;
+
+            // 次のシーンキーがあれば表示
+            if (currentScene.next) {
+                showScene(currentScene.next);
+            }
+        }
+
+        /**
+         * 選択肢エリアを表示し、テキストボックスを隠す
+         * @param {object} scene 現在のシーンオブジェクト
+         */
+        function renderChoices(scene) {
+            dom.textBox.style.display = 'none';
+            dom.choices.style.display = 'flex';
+            dom.choices.innerHTML = ''; // 選択肢をクリア
+
+            scene.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = choice.text;
+                // 選択肢ボタンをクリックしたら、対応する次のシーンへ進む
+                button.onclick = () => {
+                    dom.choices.style.display = 'none';
+                    showScene(choice.next);
+                };
+                dom.choices.appendChild(button);
+            });
+        }
+        
+        /**
+         * エンディング画面を表示する
+         * @param {object} scene エンディングシーンオブジェクト
+         */
+        function showEnding(scene) {
+            // ゲーム画面を非表示にして、エンディング画面を表示
+            dom.container.innerHTML = `
+                <div class="end-screen" style="background-image: url(${scene.bg}); background-size: cover;">
+                    <div style="background: rgba(0, 0, 0, 0.7); padding: 30px; border-radius: 10px;">
+                        <h1>${scene.text}</h1>
+                        <p>クリックでリスタート</p>
+                    </div>
+                </div>
+            `;
+            dom.container.querySelector('.end-screen').onclick = () => {
+                window.location.reload(); // ページをリロードしてゲームを最初から
+            };
+        }
+
+        // ゲームスタート
+        window.onload = () => {
+            showScene('start');
+        };
+    </script>
+
+</body>
+</html>
