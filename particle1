@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>マウス軌跡パーティクルエフェクト</title>
+    <style>
+        /* スタイル設定: 画面全体を黒くして、スクロールバーを非表示にする */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000000; /* 背景色を黒に設定 */
+        }
+        /* キャンバスを画面いっぱいに広げる */
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        // DOM要素の取得と初期設定
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = []; // パーティクルを格納する配列
+        let mouse = { x: 0, y: 0 }; // マウスの位置を保持するオブジェクト
+
+        // キャンバスのサイズを設定
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        // ウィンドウのリサイズ時にキャンバスサイズを更新
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // マウスの動きを追跡
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            
+            // マウスを動かすたびに新しいパーティクルを生成
+            for (let i = 0; i < 5; i++) { // 1度に生成するパーティクルの数を調整できます
+                particles.push(new Particle(mouse.x, mouse.y));
+            }
+        });
+
+        // --- Particle クラス ---
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                // ランダムな初期速度を設定
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                // 初期サイズと透明度
+                this.size = Math.random() * 3 + 1; // 1から4のランダムなサイズ
+                this.alpha = 1; // 初期透明度
+                this.color = `hsl(${Math.random() * 360}, 100%, 70%)`; // ランダムな色
+                this.life = 100; // パーティクルの寿命
+                this.maxLife = 100;
+            }
+
+            update() {
+                // 速度に基づいて位置を更新
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // 寿命に応じて透明度とサイズを減少させる
+                this.life--;
+                this.alpha = this.life / this.maxLife;
+                this.size *= 0.98; // 徐々にサイズを小さく
+            }
+
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // --- アニメーションループ ---
+        function animate() {
+            // 前の描画を薄く残すことで、軌跡（残像）を作成
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // 0.05 (5%) の透明度で背景を塗りつぶし
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 全てのパーティクルを更新・描画し、寿命が尽きたものを削除
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+
+                // 寿命が尽きたら配列から削除
+                if (p.life <= 0 || p.size < 0.2) {
+                    particles.splice(i, 1);
+                    i--; // 要素を削除したためインデックスを調整
+                }
+            }
+
+            // 次のフレームでanimate関数を再度呼び出す
+            requestAnimationFrame(animate);
+        }
+
+        // アニメーションを開始
+        animate();
+
+    </script>
+</body>
+</html>
