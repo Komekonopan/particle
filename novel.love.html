@@ -115,81 +115,153 @@
     </div>
 
     <script>
-        // **********************************************
-        // 1. シナリオデータ (名前修正済み)
-        // **********************************************
-        const SCENES = {
-            'start': {
-                bg: 'https://via.placeholder.com/800x600/b0e0e6/FFFFFF?text=学園+中庭',
-                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規', 
-                name: '米田 琴音',
-                text: '（高校に入学して数日。友達はできたけど、気になる人はまだいないな...）',
-                next: 'scene1'
-            },
-            'scene1': {
-                name: '???',
-                text: 'あの、ごめん！これ、君のじゃない？',
-                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規',
-                next: 'scene2'
-            },
-            'scene2': {
-                name: '米田 琴音',
-                text: 'あ、私のキーホルダー！落としちゃったんだ。ありがとう...って、あなたは？',
-                next: 'scene3'
-            },
-            'scene3': {
-                name: '正門 良規', 
-                text: '俺は1年A組の正門良規。よろしく。君は？',
-                next: 'choice1'
-            },
-            
-            'choice1': {
-                name: '米田 琴音',
-                text: '（緊張する...どう返そう？）',
-                choices: [
-                    { text: 'A. 笑顔で、少し積極的に話しかけてみる', next: 'path_A' },
-                    { text: 'B. 恥ずかしくて、少し遠慮がちに答える', next: 'path_B' }
-                ],
-                hideTextBox: true
-            },
+       // **********************************************
+// 1. シナリオデータ (再会ルート追加済み)
+// **********************************************
+const SCENES = {
+    'start': {
+        bg: 'https://via.placeholder.com/800x600/b0e0e6/FFFFFF?text=学園+中庭',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規', 
+        name: '米田 琴音',
+        text: '（高校に入学して数日。友達はできたけど、気になる人はまだいないな...）',
+        next: 'scene1'
+    },
+    'scene1': {
+        name: '???',
+        text: 'あの、ごめん！これ、君のじゃない？',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規',
+        next: 'scene2'
+    },
+    'scene2': {
+        name: '米田 琴音',
+        text: 'あ、私のキーホルダー！落としちゃったんだ。ありがとう...って、あなたは？',
+        next: 'scene3'
+    },
+    'scene3': {
+        name: '正門 良規', 
+        text: '俺は1年A組の正門良規。よろしく。君は？',
+        next: 'choice1'
+    },
+    
+    'choice1': {
+        name: '米田 琴音',
+        text: '（緊張する...どう返そう？）',
+        choices: [
+            { text: 'A. 笑顔で、少し積極的に話しかけてみる', next: 'path_A' },
+            { text: 'B. 恥ずかしくて、少し遠慮がちに答える', next: 'path_B' }
+        ],
+        hideTextBox: true
+    },
 
-            'path_A': {
-                name: '米田 琴音',
-                text: '私は1年B組の米田琴音です！本当にありがとう！正門くんって、運動部？',
-                next: 'path_A_2'
-            },
-            'path_A_2': {
-                name: '正門 良規',
-                text: 'うん、テニス部だよ。米田さん、明るくていいね。よかったら、今度一緒に帰らない？ (好感度UP！)',
-                next: 'ending_good'
-            },
+    'path_A': {
+        name: '米田 琴音',
+        text: '私は1年B組の米田琴音です！本当にありがとう！正門くんって、運動部？',
+        next: 'path_A_2'
+    },
+    'path_A_2': {
+        name: '正門 良規',
+        text: 'うん、サッカー部だよ。米田さん、明るくていいね。よかったら、今度一緒に帰らない？',
+        next: 'ending_good'
+    },
 
-            'path_B': {
-                name: '米田 琴音',
-                text: 'あ、米田...です。助かりました...。',
-                next: 'path_B_2'
-            },
-            'path_B_2': {
-                name: '正門 良規',
-                text: 'そっか。鍵、見つかってよかったな。じゃあまたな。 (少し残念そう)',
-                next: 'ending_bad'
-            },
+    'path_B': {
+        name: '米田 琴音',
+        text: 'あ、米田...です。助かりました...。',
+        next: 'path_B_2'
+    },
+    'path_B_2': {
+        name: '正門 良規',
+        text: 'そっか。鍵、見つかってよかったな。じゃあまたな。 (少し残念そう)',
+        next: 'ending_bad'
+    },
 
-            'ending_good': {
-                bg: 'https://via.placeholder.com/800x600/8fbc8f/FFFFFF?text=夕焼け+の屋上',
-                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=笑顔の良規',
-                name: 'ナレーター',
-                text: 'その後、二人は放課後を共に過ごすようになり、恋人同士になりました。**HAPPY END**',
-                end: true
-            },
-            'ending_bad': {
-                bg: 'https://via.placeholder.com/800x600/a9a9a9/FFFFFF?text=暗い教室',
-                char: '',
-                name: 'ナレーター',
-                text: '結局、彼とちゃんと話す勇気は出せなかった...。少し後悔が残る学園生活だった。**BAD END**',
-                end: true
-            }
-        };
+    // **********************************************
+    // 5. ハッピーエンド後の分岐点（新ルート）
+    // **********************************************
+    'ending_good': {
+        bg: 'https://via.placeholder.com/800x600/8fbc8f/FFFFFF?text=公園+のベンチ',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=幸せな良規',
+        name: 'ナレーター',
+        text: 'その後、二人は親しくなり、幸せな時間を過ごしました...しかし、物語はここで終わりません。',
+        // ハッピーエンド後の展開に進む
+        next: 'breakup_scene' 
+    },
+
+    'breakup_scene': {
+        bg: 'https://via.placeholder.com/800x600/36454F/FFFFFF?text=暗い+夜の部屋',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=疲れた良規',
+        name: '正門 良規',
+        text: '「ごめん、琴音。俺、仕事が夜型で、琴音は朝型で...。全然時間が合わない。このままじゃ、お互い辛いだけだ。」',
+        next: 'breakup_scene2'
+    },
+    'breakup_scene2': {
+        name: '米田 琴音',
+        text: '「うん...分かってる。寂しいけど、お互いのために、いったん距離を置こう。」',
+        next: 'time_jump'
+    },
+
+    // **********************************************
+    // 6. 時間経過と再会
+    // **********************************************
+    'time_jump': {
+        bg: 'https://via.placeholder.com/800x600/d3d3d3/FFFFFF?text=---3年後---',
+        char: '', // キャラクター非表示
+        name: 'ナレーター',
+        text: 'それから3年。琴音は新しい職場で働き、正門くんのいない生活に慣れていた。',
+        next: 'reunion_scene'
+    },
+    'reunion_scene': {
+        bg: 'https://via.placeholder.com/800x600/f08080/FFFFFF?text=賑やかな+カフェ',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=再会した良規',
+        name: '米田 琴音',
+        text: '（あれ...この背中、まさか...）「正門...くん？」',
+        next: 'reunion_choice'
+    },
+    
+    // **********************************************
+    // 7. 再会後の選択肢
+    // **********************************************
+    'reunion_choice': {
+        name: '正門 良規',
+        text: '「琴音...久しぶり。元気にしてたか？俺、実は最近働き方を変えたんだ。」',
+        choices: [
+            { text: 'A. 「私も元気だよ。また連絡してもいいかな？」と前向きに答える', next: 'reunion_A' },
+            { text: 'B. 「うん、元気だよ。じゃあ、私はこれで。」と、関係を断ち切る', next: 'reunion_B' }
+        ],
+        hideTextBox: true
+    },
+
+    // **********************************************
+    // 8. 最終エンディング
+    // **********************************************
+    'reunion_A': {
+        bg: 'https://via.placeholder.com/800x600/add8e6/FFFFFF?text=冬の公園+2人',
+        char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=優しい笑顔の良規',
+        name: 'ナレーター',
+        text: '生活リズムを合わせ、お互いの価値観を尊重し合えるようになった二人は、新しい関係を築き始めました。**TRUE END**',
+        end: true
+    },
+    'reunion_B': {
+        bg: 'https://via.placeholder.com/800x600/d3d3d3/FFFFFF?text=静かな+日常',
+        char: '',
+        name: 'ナレーター',
+        text: '過去は過去。琴音は正門くんとの思い出を胸に、新しい未来へと歩み出しました。**SEPARATE END**',
+        end: true
+    },
+
+    // **********************************************
+    // Bルートの元々のバッドエンド
+    // **********************************************
+    'ending_bad': {
+        bg: 'https://via.placeholder.com/800x600/a9a9a9/FFFFFF?text=暗い教室',
+        char: '',
+        name: 'ナレーター',
+        text: '結局、彼とちゃんと話す勇気は出せなかった...。少し後悔が残る学園生活だった。**BAD END**',
+        end: true
+    }
+};
+
+// ... (以下、ゲーム本体ロジックは変更なし) ...
 
         // **********************************************
         // 2. ゲーム本体ロジック (省略)
