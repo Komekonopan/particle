@@ -5,152 +5,197 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>きみと、終わったはずの夏 - The Summer We Left Behind</title>
     <style>
+        /* 全体設定 */
         body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-            background-color: #f0f0f0;
+            font-family: 'Yu Gothic UI', 'Hiragino Sans', sans-serif;
+            background-color: #f0f4f8; /* 背景色 */
+            color: #333;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
         }
+
+        /* ゲーム画面コンテナ */
         .game-container {
             width: 90%;
             max-width: 800px;
-            background-color: #ffffff;
-            border: 2px solid #ccc;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-            box-sizing: border-box;
-            position: relative;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
         }
-        .title {
-            text-align: center;
-            color: #333;
-            font-size: 1.8em;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-        }
-        .scenario-box {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
+
+        /* ヘッダー/タイトル */
+        .header {
+            background-color: #4a6fa5; /* テーマカラー */
+            color: #fff;
             padding: 20px;
-            min-height: 200px;
-            margin-bottom: 20px;
-            line-height: 1.8;
-            font-size: 1.1em;
-            color: #444;
-            white-space: pre-wrap; /* 改行を反映 */
-        }
-        .character-name {
-            font-weight: bold;
-            color: #e67e22; /* 良規の色 */
-            background-color: #fef4e0;
-            padding: 5px 10px;
-            margin-bottom: 10px;
-            display: inline-block;
-            border-radius: 4px;
-        }
-        .choice-section {
-            padding: 15px;
-            border-top: 1px dashed #ccc;
             text-align: center;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
         }
+        .header h1 {
+            margin: 0 0 5px 0;
+            font-size: 1.8em;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 0;
+            font-style: italic;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* シナリオ表示エリア */
+        .scenario-area {
+            padding: 30px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* テキスト表示 */
+        .text-display {
+            background-color: #e6eef7;
+            border: 1px solid #c2d5e8;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #1a1a1a;
+        }
+
+        /* 章とシーンタイトル */
+        .chapter-title {
+            color: #4a6fa5;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-left: 5px solid #4a6fa5;
+            padding-left: 10px;
+        }
+
+        /* 選択肢エリア */
+        .choices-area {
+            margin-top: 20px;
+            padding: 0 20px 20px 20px;
+        }
+
+        /* 選択肢ボタン */
         .choice-button {
             display: block;
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background-color: #3498db;
-            color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #a3c1e3; /* ボタンの標準色 */
+            color: #1a1a1a;
             border: none;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 1em;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .choice-button:hover {
-            background-color: #2980b9;
+            background-color: #7a9cc5; /* ホバー色 */
+            color: #fff;
         }
-        .chapter-title {
-            color: #c0392b;
-            font-size: 1.4em;
-            text-align: center;
-            margin: 20px 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #c0392b;
+        .choice-button:active {
+            transform: scale(0.99);
+        }
+
+        /* ナレーター・心情表示 */
+        .narrator {
+            color: #4a6fa5;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .seishiro {
+            color: #d9534f; /* 良規のセリフ色（暖色系） */
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
+    <div class="game-container">
+        <header class="header">
+            <h1>きみと、終わったはずの夏</h1>
+            <p>- The Summer We Left Behind -</p>
+            <p>テーマ：「感謝と清算」そして「大人の自立」</p>
+        </header>
 
-<div class="game-container">
-    <div class="title">きみと、終わったはずの夏 - The Summer We Left Behind</div>
+        <main class="scenario-area">
+            <div class="chapter-title">
+                🔹 第2章：終わったはずの夏（再会と葛藤編）
+            </div>
 
-    <div class="chapter-title">🔹 第2章：終わったはずの夏（再会と葛藤編）</div>
+            <div class="text-display">
+                <span class="narrator">〇〇：</span>
+                あの日、喫茶店で偶然再会した良規。別れて以来、何年も経つのに、彼はあの頃と何も変わらず、優しく、私の心に踏み込んできた。
 
-    <div class="scenario-box">
-        <p class="character-name">〇〇</p>
-        <p>「……まだ、忘れられへんし」</p>
-        <p>口に出した途端、心臓が苦しくなった。彼も、少しだけ寂しそうな顔をした。</p>
-        <p class="character-name">正門 良規</p>
-        <p>「俺もや」</p>
-        <p>その一言に、彼の正直な気持ちを感じる。けれど、すぐに彼は笑って首を振った。</p>
-        <p class="character-name">正門 良規</p>
-        <p>「でも、戻るんは違うやろ？」</p>
-        <p class="character-name">〇〇</p>
-        <p>「うん、違うと思う」</p>
-        <p>静かな時間が流れた。彼は、私を気遣うように、質問を続けてきた。</p>
+                <span class="seishiro">正門 良規：「…〇〇は、ちゃんと幸せになってる？」</span>
+
+                その言葉に、胸が締め付けられる。彼は、私を傷つけたことを今も気にしているのだろう。私は、彼の優しい心を傷つけないように、言葉を選ばなければならない。
+            </div>
+            
+            <div class="choices-area">
+                <p>良規の「幸せになってる？」の問いへの返答は？</p>
+                <button class="choice-button" onclick="loadNextScenario('choiceA_2A')">
+                    <strong>選択肢A：</strong>「まだ、忘れられへんし」と言った後、「でも、良規と会えて元気が出た」と感謝で終わらせる。
+                    <br><small>（彼への感謝を伝えることで、自分の寂しさを遠回しに伝える）</small>
+                </button>
+                <button class="choice-button" onclick="loadNextScenario('choiceB_2A')">
+                    <strong>選択肢B：</strong>「（良規は）私よりずっと幸せそうに見えるよ。安心した」と、彼の現状を肯定する。
+                    <br><small>（**良規の自己肯定感を高める**ことを重視する）</small>
+                </button>
+            </div>
+
+            <hr>
+
+            <div class="chapter-title" style="margin-top: 20px;">
+                🔹 第3章：それぞれの道（決別と感謝編）
+            </div>
+
+             <div class="text-display">
+                <span class="narrator">〇〇：</span>
+                別れを予感させるLINEの後、出張を終える前に彼と最後に会うことになった。
+                もう、未練や寂しさを伝えるのはやめよう。この恋を「誇り」に変えるために。
+
+                <span class="seishiro">正門 良規：「…最後に、俺に何か言うことはない？」</span>
+
+                彼の瞳は、何かを待っているようだった。
+            </div>
+
+            <div class="choices-area">
+                <p>最後に、良規の目を見て伝える一言は？</p>
+                <button class="choice-button" onclick="loadNextScenario('epilogueA')">
+                    <strong>選択肢A：</strong>「出会ってくれて、ありがとう」とシンプルな感謝を伝える。
+                </button>
+                <button class="choice-button" onclick="loadNextScenario('epilogueB')">
+                    <strong>選択肢B：</strong>「良規は、私の**誇り**だよ」と彼の存在を尊重する。
+                    <br><small>（**彼の自己肯定感を最大化**し、過去の恋にポジティブな意味付けをする）</small>
+                </button>
+            </div>
+        </main>
+        
+        <footer style="padding: 10px 30px; text-align: right; background-color: #e6eef7; font-size: 0.8em; color: #666;">
+            © A Mature Love Story Project
+        </footer>
     </div>
 
-    <div class="scenario-box">
-        <p>【**選択肢：A. 喫茶店での偶然**】</p>
-        <p>彼の問いかけに対し、過去への未練をどう伝えるか。</p>
-    </div>
-
-    <div class="choice-section">
-        <button class="choice-button" onclick="alert('良規の自己肯定感を高める選択：Happy/Normal Endルートへ');">
-            「でも、良規と会えて元気が出た」と感謝で終わらせる
-        </button>
-        <button class="choice-button" onclick="alert('良規の現状を肯定する選択：Normal/Bad Endルートへ');">
-            「（良規は）私よりずっと幸せそうに見えるよ。安心した」と、彼の現状を肯定する
-        </button>
-    </div>
-    
-    <div class="chapter-title">🔹 第3章：それぞれの道（決別と感謝編）</div>
-
-    <div class="scenario-box">
-        <p>【**選択肢：B. 気持ちの確認**】</p>
-        <p>「今でも好きや」という良規の言葉に対し、彼を傷つけずに別れを肯定する言葉を選ぶ。</p>
-    </div>
-
-    <div class="choice-section">
-        <button class="choice-button" onclick="alert('別れにポジティブな意味付けをする選択：Happy Endルートへ');">
-            「私たちの別れは、お互いがもっと成長するためのものだった」と、別れに意味を持たせる
-        </button>
-        <button class="choice-button" onclick="alert('彼の気持ちを優しく受け止め、未来を応援する選択：Normal Endルートへ');">
-            「私も好きだった。でも、良規のこれからを応援したい」と伝え、別れを肯定する
-        </button>
-    </div>
-    
-    <div class="scenario-box">
-        <p>【**選択肢：C. エピローグ**】</p>
-        <p>扉が閉まる直前、彼の目に届く最後の言葉。</p>
-    </div>
-    
-    <div class="choice-section">
-        <button class="choice-button" onclick="alert('良規の存在を尊重する選択：Happy End確率大');">
-            「良規は、私の誇りだよ」と彼の存在を尊重する
-        </button>
-        <button class="choice-button" onclick="alert('シンプルな感謝を伝える選択：Normal End確率大');">
-            「出会ってくれて、ありがとう」と感謝を伝える
-        </button>
-    </div>
-
-
-</div>
-
+    <script>
+        function loadNextScenario(choice) {
+            alert('「' + choice + '」を選択しました。物語は次の展開へ…\n\n（実際のゲームでは、この選択がエンディングに影響します。）');
+            // ここに実際のシナリオ遷移ロジックが記述されます。
+        }
+    </script>
 </body>
 </html>
