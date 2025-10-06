@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>じゃんけんゲーム</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #rock { background-color: #ff6347; color: white; } /* グー */
+        #scissors { background-color: #4682b4; color: white; } /* チョキ */
+        #paper { background-color: #3cb371; color: white; } /* パー */
+
+        button:hover {
+            opacity: 0.9;
+        }
+        #result, #game-status {
+            margin-top: 20px;
+            padding: 10px;
+            font-weight: bold;
+        }
+        #game-status {
+            font-size: 1.1em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1> じゃんけんゲーム </h1>
+        <p>下のボタンを押して、あなたの手を選んでください。</p>
+
+        <button id="rock" onclick="playGame('グー')">グー ()</button>
+        <button id="scissors" onclick="playGame('チョキ')">チョキ ()</button>
+        <button id="paper" onclick="playGame('パー')">パー ()</button>
+
+        <div id="game-status">
+            現在のスコア: <span id="player-score">0</span> 勝 - <span id="computer-score">0</span> 負
+        </div>
+
+        <div id="result">
+            ゲームを開始しましょう！
+        </div>
+    </div>
+
+    <script>
+        // グー、チョキ、パーを数値にマッピング
+        const choices = {
+            'グー': 0,
+            'チョキ': 1,
+            'パー': 2
+        };
+
+        // スコアを保持する変数
+        let playerScore = 0;
+        let computerScore = 0;
+
+        /**
+         * コンピュータの手をランダムに決定する関数
+         * @returns {string} 'グー', 'チョキ', 'パー のいずれか
+         */
+        function getComputerChoice() {
+            const keys = Object.keys(choices);
+            const randomIndex = Math.floor(Math.random() * keys.length);
+            return keys[randomIndex];
+        }
+
+        /**
+         * ゲームをプレイし、結果を判定する関数
+         * @param {string} playerChoice プレイヤーが選んだ手 ('グー', 'チョキ', 'パー')
+         */
+        function playGame(playerChoice) {
+            const computerChoice = getComputerChoice();
+            const playerNum = choices[playerChoice];
+            const computerNum = choices[computerChoice];
+            let resultMessage = "";
+
+            // 勝敗判定ロジック
+            // (プレイヤーの手 - コンピュータの手 + 3) % 3 の結果で判定
+            // 0: あいこ, 1: プレイヤーの負け, 2: プレイヤーの勝ち
+            const diff = (playerNum - computerNum + 3) % 3;
+
+            if (diff === 0) {
+                resultMessage = " あいこです！";
+            } else if (diff === 2) {
+                // 勝ち
+                resultMessage = " あなたの**勝ち**です！";
+                playerScore++;
+            } else {
+                // 負け (diff === 1)
+                resultMessage = " コンピュータの**負け**です！";
+                computerScore++;
+            }
+
+            // 結果とステータスを画面に表示
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `
+                あなた: ${playerChoice} | コンピュータ: ${computerChoice}<br>
+                ${resultMessage}
+            `;
+
+            // スコアを更新
+            document.getElementById('player-score').textContent = playerScore;
+            document.getElementById('computer-score').textContent = computerScore;
+
+            // 勝敗が決定したら色を変える
+            if (diff === 2) {
+                resultElement.style.color = '#006400'; // 勝ち: 濃い緑
+            } else if (diff === 1) {
+                resultElement.style.color = '#8b0000'; // 負け: 濃い赤
+            } else {
+                resultElement.style.color = '#333'; // あいこ: 黒
+            }
+        }
+    </script>
+
+</body>
+</html>
