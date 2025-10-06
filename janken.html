@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>じゃんけんゲーム</title>
     <style>
         body {
@@ -68,51 +69,42 @@
     </div>
 
     <script>
-        // グー、チョキ、パーを数値にマッピング
+        // グー(0), チョキ(1), パー(2)
         const choices = {
             'グー': 0,
             'チョキ': 1,
             'パー': 2
         };
 
-        // スコアを保持する変数
         let playerScore = 0;
         let computerScore = 0;
 
-        /**
-         * コンピュータの手をランダムに決定する関数
-         * @returns {string} 'グー', 'チョキ', 'パー のいずれか
-         */
         function getComputerChoice() {
             const keys = Object.keys(choices);
             const randomIndex = Math.floor(Math.random() * keys.length);
             return keys[randomIndex];
         }
 
-        /**
-         * ゲームをプレイし、結果を判定する関数
-         * @param {string} playerChoice プレイヤーが選んだ手 ('グー', 'チョキ', 'パー')
-         */
         function playGame(playerChoice) {
             const computerChoice = getComputerChoice();
             const playerNum = choices[playerChoice];
             const computerNum = choices[computerChoice];
             let resultMessage = "";
 
-            // 勝敗判定ロジック
-            // (プレイヤーの手 - コンピュータの手 + 3) % 3 の結果で判定
+            // 勝敗判定ロジック: (プレイヤー - コンピュータ + 3) % 3
             // 0: あいこ, 1: プレイヤーの負け, 2: プレイヤーの勝ち
             const diff = (playerNum - computerNum + 3) % 3;
 
             if (diff === 0) {
                 resultMessage = " あいこです！";
             } else if (diff === 2) {
-                // 勝ち
+                // プレイヤーの勝ち (例: パー(2) - グー(0) = 2)
                 resultMessage = " あなたの**勝ち**です！";
                 playerScore++;
             } else {
-                // 負け (diff === 1)
-                resultMessage = " コンピュータの**負け**です！";
+                // プレイヤーの負け (diff === 1) (例: チョキ(1) - パー(2) = -1. (-1 + 3) % 3 = 2。ここが逆転していた。)
+                // 修正後: (例: パー(2) - チョキ(1) = 1. 1 % 3 = 1) 
+                resultMessage = " あなたの**負け**です！"; // 修正しました
                 computerScore++;
             }
 
