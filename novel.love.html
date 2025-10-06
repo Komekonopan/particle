@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シンプル恋愛ノベルゲーム</title>
+    <title>女性主人公 シンプル恋愛ノベルゲーム</title>
     <style>
         body {
             font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
@@ -46,12 +46,12 @@
             color: white;
             padding: 20px;
             box-sizing: border-box;
-            cursor: pointer; /* クリックで次へ進むことを示す */
+            cursor: pointer;
         }
         #speaker-name {
             font-size: 1.2em;
             font-weight: bold;
-            color: #ff99ff; /* ヒロインカラー */
+            color: #ff99ff;
             margin-bottom: 5px;
         }
         #dialogue-text {
@@ -71,7 +71,7 @@
         }
         .choice-button {
             padding: 15px;
-            background-color: #4CAF50;
+            background-color: #ff69b4;
             color: white;
             border: none;
             border-radius: 8px;
@@ -80,7 +80,7 @@
             transition: background-color 0.3s, transform 0.1s;
         }
         .choice-button:hover {
-            background-color: #45a049;
+            background-color: #ff1493;
             transform: translateY(-2px);
         }
         .end-screen {
@@ -111,101 +111,88 @@
         </div>
 
         <div id="choices-area" style="display:none;">
-            </div>
+        </div>
     </div>
 
     <script>
         // **********************************************
-        // 1. シナリオデータ
+        // 1. シナリオデータ (名前修正済み)
         // **********************************************
         const SCENES = {
             'start': {
                 bg: 'https://via.placeholder.com/800x600/b0e0e6/FFFFFF?text=学園+中庭',
-                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=ヒロイン',
-                name: '主人公',
-                text: '（高校に入学して数日。まだ友達もいないな...）',
+                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規', 
+                name: '米田 琴音',
+                text: '（高校に入学して数日。友達はできたけど、気になる人はまだいないな...）',
                 next: 'scene1'
             },
             'scene1': {
                 name: '???',
-                text: 'あの、すみません！これを落としましたよ。',
-                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=ヒロイン',
+                text: 'あの、ごめん！これ、君のじゃない？',
+                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=正門良規',
                 next: 'scene2'
             },
             'scene2': {
-                name: '主人公',
-                text: 'あ、生徒手帳だ！ありがとうございます...って、あなたは？',
+                name: '米田 琴音',
+                text: 'あ、私のキーホルダー！落としちゃったんだ。ありがとう...って、あなたは？',
                 next: 'scene3'
             },
             'scene3': {
-                name: 'ヒロイン (桜井 遥)',
-                text: '私、1年A組の桜井遥です。あなたは？',
+                name: '正門 良規', 
+                text: '俺は1年A組の正門良規。よろしく。君は？',
                 next: 'choice1'
             },
             
-            // **********************************************
-            // 2. 選択肢パート
-            // **********************************************
             'choice1': {
-                name: '主人公',
-                text: '（ここでどう答えるか...）',
+                name: '米田 琴音',
+                text: '（緊張する...どう返そう？）',
                 choices: [
-                    { text: 'A. 落ち着いて、丁寧に自己紹介をする', next: 'path_A' },
-                    { text: 'B. 照れながら、少しぶっきらぼうに答える', next: 'path_B' }
+                    { text: 'A. 笑顔で、少し積極的に話しかけてみる', next: 'path_A' },
+                    { text: 'B. 恥ずかしくて、少し遠慮がちに答える', next: 'path_B' }
                 ],
-                // 選択肢では text-box を非表示にする
                 hideTextBox: true
             },
 
-            // **********************************************
-            // 3. ルート分岐 (Aルート)
-            // **********************************************
             'path_A': {
-                name: '主人公',
-                text: '1年B組の佐藤です。助かりました、お礼に何かさせてください！',
+                name: '米田 琴音',
+                text: '私は1年B組の米田琴音です！本当にありがとう！正門くんって、運動部？',
                 next: 'path_A_2'
             },
             'path_A_2': {
-                name: '桜井 遥',
-                text: 'えっ、そんな。大丈夫ですよ！でも...もしよかったら、今度一緒に購買に行きませんか？ (好感度UP！)',
+                name: '正門 良規',
+                text: 'うん、サッカー部だよ。米田さん、明るくていいね。よかったら、今度一緒に帰らない？ (好感度UP！)',
                 next: 'ending_good'
             },
 
-            // **********************************************
-            // 4. ルート分岐 (Bルート)
-            // **********************************************
             'path_B': {
-                name: '主人公',
-                text: '...佐藤だけど。手帳、ありがとう。',
+                name: '米田 琴音',
+                text: 'あ、米田...です。助かりました...。',
                 next: 'path_B_2'
             },
             'path_B_2': {
-                name: '桜井 遥',
-                text: 'そ、そう...。ちょっと怖かったけど、手帳が見つかってよかった。じゃあね...。 (好感度DOWN)',
+                name: '正門 良規',
+                text: 'そっか。鍵、見つかってよかったな。じゃあまたな。 (少し残念そう)',
                 next: 'ending_bad'
             },
 
-            // **********************************************
-            // 5. エンディング
-            // **********************************************
             'ending_good': {
-                bg: 'https://via.placeholder.com/800x600/8fbc8f/FFFFFF?text=放課後+デート',
-                char: 'https://via.placeholder.com/250x400/ffb6c1/FFFFFF?text=笑顔の遥',
+                bg: 'https://via.placeholder.com/800x600/8fbc8f/FFFFFF?text=夕焼け+の屋上',
+                char: 'https://via.placeholder.com/250x400/87cefa/FFFFFF?text=笑顔の良規',
                 name: 'ナレーター',
-                text: 'その後、二人は親しくなり、幸せな学園生活を送りました。**HAPPY END**',
+                text: 'その後、二人は放課後を共に過ごすようになり、恋人同士になりました。**HAPPY END**',
                 end: true
             },
             'ending_bad': {
                 bg: 'https://via.placeholder.com/800x600/a9a9a9/FFFFFF?text=暗い教室',
-                char: '', // キャラクター画像を消す
+                char: '',
                 name: 'ナレーター',
-                text: '結局、その後彼女と話す機会は訪れなかった...。**BAD END**',
+                text: '結局、彼とちゃんと話す勇気は出せなかった...。少し後悔が残る学園生活だった。**BAD END**',
                 end: true
             }
         };
 
         // **********************************************
-        // 2. ゲーム本体ロジック
+        // 2. ゲーム本体ロジック (省略)
         // **********************************************
         let currentSceneKey = 'start';
 
@@ -219,10 +206,6 @@
             container: document.getElementById('gameContainer')
         };
 
-        /**
-         * 現在のシーンを表示する
-         * @param {string} key シーンのキー (SCENESのキー)
-         */
         function showScene(key) {
             currentSceneKey = key;
             const scene = SCENES[key];
@@ -232,31 +215,26 @@
                 return;
             }
             
-            // 終了判定
             if (scene.end) {
                 showEnding(scene);
                 return;
             }
             
-            // 選択肢がある場合は選択肢を表示
             if (scene.choices) {
                 renderChoices(scene);
                 return;
             }
 
-            // 画像の更新 (定義されている場合のみ)
             if (scene.bg) {
                 dom.bg.src = scene.bg;
             }
-            // キャラクター画像の更新
             if (scene.char !== undefined) {
                 dom.char.src = scene.char;
-                dom.char.style.opacity = scene.char ? '1' : '0'; // 画像がない場合は非表示
+                dom.char.style.opacity = scene.char ? '1' : '0';
             } else if (dom.char.src) {
-                 dom.char.style.opacity = '1'; // 定義なしなら前シーンの画像を保持
+                 dom.char.style.opacity = '1';
             }
 
-            // テキストボックスの表示
             dom.textBox.style.display = 'block';
             dom.choices.style.display = 'none';
 
@@ -264,35 +242,25 @@
             dom.text.textContent = scene.text;
         }
 
-        /**
-         * 次のシーンに進む (クリック時)
-         */
         function nextScene() {
             const currentScene = SCENES[currentSceneKey];
             
-            // 選択肢が表示されている場合は何もしない
             if (currentScene.choices) return;
 
-            // 次のシーンキーがあれば表示
             if (currentScene.next) {
                 showScene(currentScene.next);
             }
         }
 
-        /**
-         * 選択肢エリアを表示し、テキストボックスを隠す
-         * @param {object} scene 現在のシーンオブジェクト
-         */
         function renderChoices(scene) {
             dom.textBox.style.display = 'none';
             dom.choices.style.display = 'flex';
-            dom.choices.innerHTML = ''; // 選択肢をクリア
+            dom.choices.innerHTML = '';
 
             scene.choices.forEach((choice, index) => {
                 const button = document.createElement('button');
                 button.className = 'choice-button';
                 button.textContent = choice.text;
-                // 選択肢ボタンをクリックしたら、対応する次のシーンへ進む
                 button.onclick = () => {
                     dom.choices.style.display = 'none';
                     showScene(choice.next);
@@ -301,12 +269,7 @@
             });
         }
         
-        /**
-         * エンディング画面を表示する
-         * @param {object} scene エンディングシーンオブジェクト
-         */
         function showEnding(scene) {
-            // ゲーム画面を非表示にして、エンディング画面を表示
             dom.container.innerHTML = `
                 <div class="end-screen" style="background-image: url(${scene.bg}); background-size: cover;">
                     <div style="background: rgba(0, 0, 0, 0.7); padding: 30px; border-radius: 10px;">
@@ -316,11 +279,10 @@
                 </div>
             `;
             dom.container.querySelector('.end-screen').onclick = () => {
-                window.location.reload(); // ページをリロードしてゲームを最初から
+                window.location.reload();
             };
         }
 
-        // ゲームスタート
         window.onload = () => {
             showScene('start');
         };
