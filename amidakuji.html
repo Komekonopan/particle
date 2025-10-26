@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【修正版】被らないあみだくじ</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f3f4f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #111;
+            margin-bottom: 10px;
+        }
+        .input-area {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        textarea {
+            width: 200px;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: none;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+        #amidaCanvas {
+            background-color: #fff;
+            border: 1px solid #999;
+            border-radius: 8px;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #resultArea {
+            margin-top: 15px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            width: 560px; /* Canvasの幅と合わせる */
+            min-height: 80px;
+            text-align: left;
+        }
+        #resultArea p {
+            margin: 8px 0;
+        }
+
+        .labels {
+            display: flex;
+            justify-content: space-around;
+            width: 600px;
+            margin: 5px auto;
+            padding: 0 40px; 
+            box-sizing: border-box;
+            font-weight: bold;
+        }
+        .start-label-item {
+            color: #0056b3;
+            width: 80px;
+        }
+        .goal-label-item {
+            color: #cc0000;
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>被らないあみだくじゲーム</h1>
+
+    <div class="input-area">
+        <div class="input-group">
+            <label for="participantsInput">参加者 (1行に1人)</label>
+            <textarea id="participantsInput">Aさん
+Bさん
+Cさん
+Dさん
+Eさん</textarea>
+        </div>
+        <div class="input-group">
+            <label for="themesInput">お題 (1行に1つ)</label>
+            <textarea id="themesInput">お題１
+お題２
+お題３
+お題４
+お題５</textarea>
+        </div>
+        <div class="input-group">
+            <button id="updateButton" style="margin-top: 25px;">データ更新＆盤面描画</button>
+        </div>
+    </div>
+    
+    <div id="startLabels" class="labels"></div>
+
+    <canvas id="amidaCanvas" width="600" height="500"></canvas>
+
+    <div id="goalLabels" class="labels"></div>
+    
+    <div class="controls">
+        <button id="createBtn" disabled>あみだくじ作成 (完全攪乱)</button>
+        <button id="startBtn" disabled>アニメーション開始</button>
+    </div>
+
+    <div id="resultArea">
+        <p>「データ更新＆盤面描画」を押して、参加者とお題を適用してください。</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- ⚙️ 設定 ---
+            const NUM_HORIZONTAL_LINES_TARGET = 15; // 横線の目標数（多いほどランダム性が上がる）
+            const TRACE_WIDTH = 8; // アニメーションの線の太さ
+            const TRACE_SPEED = 0.05; // アニメーション速度 (大きいほど速い)
+            const TRACE_COLORS = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#33FFF6', '#F3FF33', '#6A5ACD', '#DA70D6'];
+
+            // --- DOM要素 ---
+            const canvas = document.getElementById('amidaCanvas');
+            const ctx = canvas.getContext('2d');
+            const createBtn = document.getElementById('createBtn');
+            const startBtn = document.getElementById('startBtn');
+            const updateButton = document.getElementById('updateButton');
+            const participantsInput = document.getElementById('participantsInput');
+            const themesInput = document.getElementById('themesInput');
+            const resultArea = document.getElementById('resultArea');
+            const startLabelsEl = document.getElementById('startLabels');
+            const goalLabelsEl = document.getElementById('goalLabels');
+
+            // --- あみだくじデータ ---
+            let participants = []; // 参加者リスト
+            let themes = []; // お題リスト
+            let numParticipants = 0; // 参加人数
+            let vLines = []; // 縦線のX座標
+            let ladders = []; // 横線データ (y, leftIndex, rightIndex)
+            let paths = []; // アニメーション用の全パス
+            let results = []; // 各スタートからのゴールインデックス
+
+            // --- 定数 ---
+            const PADDING_X = 50; 
+            const PADDING_Y = 50;
+            const V_LINE_WIDTH = 4;
+            const H_LINE_WIDTH = 4;
+
+            // --- イベントリスナー ---
+            updateButton.addEventListener('click', updateGameData);
+            createBtn.addEventListener('click', setupAmida);
+            startBtn.addEventListener('click', startAnimation);
+            
+            // ページ読み込み時に初期化
+            updateGameData(); 
+
+            /**
+             * 1. 入力値を取得し、ゲームデータを更新し、ラベルを描画
+             */
+            function updateGameData() {
+                // 改行で分割し、空行を除去
+                participants = participantsInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                themes = themesInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                numParticipants = participants.length;
+
+                startLabelsEl.innerHTML = '';
+                goalLabelsEl.innerHTML = '';
+
+                if (numParticipants === 0 || numParticipants !== themes.length) {
+                    // データが不完全な場合
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const errorMsg = numParticipants === 0 
+                        ? "参加者またはお題を入力してください。"
+                        : `⚠️ 参加者 (${numParticipants}人) とお題 (${themes.length}個) の数が一致しません！`;
+                    resultArea.innerHTML = `<p style="color: red;">${errorMsg}</p>`;
+                    createBtn.disabled = true;
+                    startBtn.disabled = true;
+                    return;
+                }
+                
+                // ラベルの描画
+                for (let i = 0; i < numParticipants; i++) {
+                    startLabelsEl.innerHTML += `<div class="start-label-item">${participants[i]}</div>`;
+                    goalLabelsEl.innerHTML += `<div class="goal-label-item">${themes[i]}</div>`;
+                }
+
+                // 縦線の座標を再計算
+                calculateVLines();
+                
+                // 静的なあみだくじ盤面を初期描画（線なし）
+                drawAmida(); 
+                
+                resultArea.innerHTML = `<p>データ更新完了！ (${numParticipants}人/${numParticipants}個) 「あみだくじ作成」を押してください。</p>`;
+                createBtn.disabled = false;
+                startBtn.disabled = true;
+                updateButton.disabled = false;
+            }
+
+            /**
+             * 縦線のX座標を計算
+             */
+            function calculateVLines() {
+                vLines = [];
+                if (numParticipants < 1) return;
+                const canvasWidth = canvas.width;
+                const spacing = (canvasWidth - PADDING_X * 2) / Math.max(1, numParticipants - 1);
+
+                for (let i = 0; i < numParticipants; i++) {
+                    vLines.push(PADDING_X + i * spacing);
+                }
+            }
+
+            /**
+             * 2. あみだくじのセットアップ（作成ボタン押下時）
+             */
+            function setupAmida() {
+                let attempts = 0;
+                while (attempts < 1000) { 
+                    attempts++;
+                    
+                    generateLadders(); // ランダムな横線データを生成
+                    calculateResults(); // 結果を計算
+
+                    if (checkDerangement()) {
+                        break; // 完全攪乱の条件を満たしたらループを抜ける
+                    }
+                    if (attempts >= 1000) {
+                        resultArea.innerHTML = `<p style="color: red;">エラー: 1000回試行しましたが、完全攪乱のあみだくじを生成できませんでした。再試行してください。</p>`;
+                        return;
+                    }
+                }
+                
+                drawAmida(); // 確定した横線配置を描画
+                calculateAllPaths(); // アニメーション用のパスを事前計算
+                
+                resultArea.innerHTML = "<p>あみだくじ作成完了！完全攪乱が保証されています。「アニメーション開始」を押してください。</p>";
+                createBtn.disabled = true; 
+                startBtn.disabled = false;
+                updateButton.disabled = true; // 抽選中は変更不可
+            }
+
+            /**
+             * ランダムな横線データを生成
+             */
+            function generateLadders() {
+                ladders = [];
+                const canvasHeight = canvas.height;
+                const yArea = canvasHeight - PADDING_Y * 2;
+                const maxSteps = yArea / 20; // Y座標の最小間隔を20pxとする
+
+                for (let i = 0; i < NUM_HORIZONTAL_LINES_TARGET; i++) {
+                    
+                    // ランダムな高さYを決定
+                    const y = PADDING_Y + 10 + Math.random() * (yArea - 20);
+                    
+                    // ランダムに左側の縦線を選ぶ (一番右以外)
+                    const leftIndex = Math.floor(Math.random() * (numParticipants - 1));
+                    
+                    // 重複チェック (同じY座標に近すぎる横線を避ける)
+                    const isOverlap = ladders.some(lad => 
+                        lad.leftIndex === leftIndex && Math.abs(lad.y - y) < 15 // 同じ縦線間隔で近すぎる
+                    );
+                    
+                    // 左右のどちらかに既に横線があるY座標に近すぎるものを避ける
+                    const isTooClose = ladders.some(lad => 
+                        Math.abs(lad.y - y) < 15 && (lad.leftIndex === leftIndex - 1 || lad.leftIndex === leftIndex)
+                    );
+
+                    if (!isOverlap && !isTooClose) {
+                        ladders.push({ y: y, leftIndex: leftIndex, rightIndex: leftIndex + 1 });
+                    }
+                }
+                
+                // Y座標でソート（トレース処理に必須）
+                ladders.sort((a, b) => a.y - b.y);
+            }
+
+            /**
+             * 3. 「i番目がi番目に行かない」 (完全攪乱) かどうかをチェック
+             */
+            function checkDerangement() {
+                let isDerangement = true;
+                results = [];
+                for (let i = 0; i < numParticipants; i++) {
+                    const goalIndex = trace(i);
+                    results.push(goalIndex);
+                    if (goalIndex === i) {
+                        isDerangement = false; // 1つでもi->iがあればNG
+                        break;
+                    }
+                }
+                return isDerangement;
+            }
+
+            /**
+             * あみだくじの全結果を計算する（ロジックのコア）
+             */
+            function calculateResults() {
+                results = [];
+                for (let i = 0; i < numParticipants; i++) {
+                    results.push(trace(i));
+                }
+            }
+
+            /**
+             * 指定されたスタートインデックスからゴールインデックスまでを計算
+             * @param {number} startIndex - スタートする縦線のインデックス
+             * @returns {number} - ゴールする縦線のインデックス
+             */
+            function trace(startIndex) {
+                let currentIndex = startIndex;
+                
+                for (const ladder of ladders) {
+                    if (ladder.leftIndex === currentIndex) {
+                        currentIndex++; // 右に移動
+                    } else if (ladder.rightIndex === currentIndex) {
+                        currentIndex--; // 左に移動
+                    }
+                }
+                return currentIndex;
+            }
+            
+            /**
+             * アニメーション用の全パス（座標リスト）を事前計算
+             */
+            function calculateAllPaths() {
+                paths = [];
+                for (let i = 0; i < numParticipants; i++) {
+                    paths.push(getPathForTrace(i));
+                }
+            }
+
+            /**
+             * 1人分のトレースパス（座標の配列）を取得する
+             */
+            function getPathForTrace(startIndex) {
+                let currentX = vLines[startIndex];
+                let currentY = PADDING_Y;
+                let currentIndex = startIndex;
+                const path = [{ x: currentX, y: currentY }]; // スタート地点
+
+                for (const ladder of ladders) {
+                    if (ladder.leftIndex === currentIndex) {
+                        // 右へ移動
+                        path.push({ x: currentX, y: ladder.y }); // 横線まで下降
+                        currentX = vLines[ladder.rightIndex];
+                        currentIndex++;
+                        path.push({ x: currentX, y: ladder.y }); // 横移動
+                    } else if (ladder.rightIndex === currentIndex) {
+                        // 左へ移動
+                        path.push({ x: currentX, y: ladder.y }); // 横線まで下降
+                        currentX = vLines[ladder.leftIndex];
+                        currentIndex--;
+                        path.push({ x: currentX, y: ladder.y }); // 横移動
+                    }
+                }
+                
+                // ゴールまで下降
+                path.push({ x: currentX, y: canvas.height - PADDING_Y });
+                return path;
+            }
+
+            /**
+             * 4. あみだくじの静的な線を描画
+             */
+            function drawAmida() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = '#333';
+                ctx.lineCap = 'butt';
+
+                // 1. 縦線を描画
+                ctx.lineWidth = V_LINE_WIDTH;
+                for (const x of vLines) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, PADDING_Y);
+                    ctx.lineTo(x, canvas.height - PADDING_Y);
+                    ctx.stroke();
+                }
+
+                // 2. 横線を描画
+                ctx.lineWidth = H_LINE_WIDTH;
+                for (const ladder of ladders) {
+                    const x1 = vLines[ladder.leftIndex];
+                    const x2 = vLines[ladder.rightIndex];
+                    ctx.beginPath();
+                    ctx.moveTo(x1, ladder.y);
+                    ctx.lineTo(x2, ladder.y);
+                    ctx.stroke();
+                }
+            }
+
+            /**
+             * 5. アニメーション開始（ボタン押下時）
+             */
+            async function startAnimation() {
+                createBtn.disabled = true;
+                startBtn.disabled = true;
+                updateButton.disabled = true;
+                resultArea.innerHTML = "";
+                
+                for (let i = 0; i < numParticipants; i++) {
+                    // アニメーションの前に、毎回あみだくじを再描画（前の軌跡を消すため）
+                    drawAmida(); 
+                    
+                    const participant = participants[i];
+                    const goalTheme = themes[results[i]];
+                    const color = TRACE_COLORS[i % TRACE_COLORS.length];
+                    
+                    resultArea.innerHTML += `<p><strong>${participant}</strong> が線を辿ります... </p>`;
+                    
+                    // アニメーション実行
+                    await animateTrace(paths[i], color);
+                    
+                    // 結果を確定して表示
+                    const resultP = resultArea.querySelector('p:last-child');
+                    resultP.innerHTML = `✅ <strong>${participant}</strong> は <strong>${goalTheme}</strong> に決定！`;
+                    
+                    await sleep(1500); // 次の人までの待機時間
+                }
+
+                resultArea.innerHTML += "<h3>全員の抽選が完了しました！</h3>";
+                createBtn.disabled = false;
+                updateButton.disabled = false;
+            }
+
+            /**
+             * 6. 1人分のパスをアニメーション描画
+             */
+            function animateTrace(path, color) {
+                return new Promise(resolve => {
+                    let segmentIndex = 0; 
+                    let progress = 0; 
+                    let startTime = performance.now();
+
+                    function animate(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        
+                        if (segmentIndex >= path.length - 1) {
+                            resolve(); // アニメーション終了
+                            return;
+                        }
+                        
+                        // 現在の線分の始点と終点
+                        const start = path[segmentIndex];
+                        const end = path[segmentIndex + 1];
+
+                        // 時間ベースで進捗を計算
+                        // 縦線と横線で速度を調整しても良いが、シンプルに一定速度で描画
+                        const segmentLength = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+                        const targetProgress = elapsed * TRACE_SPEED / segmentLength;
+
+                        progress += targetProgress;
+
+                        if (progress > 1.0) {
+                            progress = 1.0;
+                        }
+
+                        // 線形補間で現在位置を計算
+                        const currentX = start.x + (end.x - start.x) * progress;
+                        const currentY = start.y + (end.y - start.y) * progress;
+
+                        // 軌跡を描画
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = TRACE_WIDTH;
+                        ctx.lineCap = 'round';
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(path[0].x, path[0].y); // 常に最初の点から現在の点まで描画
+
+                        // これまでの確定した線分
+                        for(let i = 1; i <= segmentIndex; i++) {
+                            ctx.lineTo(path[i].x, path[i].y);
+                        }
+                        // 現在描画中の線分
+                        ctx.lineTo(currentX, currentY); 
+                        ctx.stroke();
+
+                        // 線分の終点まで到達したら、次の線分へ
+                        if (progress >= 1.0) {
+                            progress = 0;
+                            segmentIndex++;
+                            startTime = currentTime; // 次の線分の開始時刻をリセット
+                        }
+
+                        requestAnimationFrame(animate);
+                    }
+
+                    requestAnimationFrame(animate);
+                });
+            }
+            
+            /**
+             * 待機用関数
+             */
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+        });
+    </script>
+
+</body>
+</html>
