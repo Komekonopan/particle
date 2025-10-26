@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>被らないルーレットゲーム</title>
+    <title>【修正版】被らないルーレットゲーム</title>
 
     <style>
         body {
@@ -16,9 +16,38 @@
             background-color: #f3f4f6;
             color: #333;
             margin: 0;
+            padding: 20px;
         }
         h1 {
             color: #111;
+            margin-bottom: 10px;
+        }
+        .input-area {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        textarea {
+            width: 200px;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            resize: none;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: left;
         }
         #rouletteCanvas {
             background-color: #fff;
@@ -28,23 +57,23 @@
         }
         .controls {
             margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         button {
-            font-size: 18px;
-            padding: 12px 24px;
-            margin: 0 10px;
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 5px;
             cursor: pointer;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 8px;
-            transition: background-color 0.3s, transform 0.1s;
+            transition: background-color 0.3s;
         }
         button:hover:not(:disabled) {
             background-color: #0056b3;
-        }
-        button:active:not(:disabled) {
-            transform: scale(0.98);
         }
         button:disabled {
             background-color: #ccc;
@@ -59,7 +88,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             width: 460px; /* Canvasの幅と合わせる */
-            min-height: 100px;
+            min-height: 80px;
             text-align: left;
         }
         #resultArea p {
@@ -69,79 +98,137 @@
 </head>
 <body>
 
-    <h1>被らないルーレットゲーム</h1>
+    <h1>被らないルーレットゲーム (自由入力版)</h1>
 
+    <div class="input-area">
+        <div class="input-group">
+            <label for="participantsInput">参加者 (1行に1人)</label>
+            <textarea id="participantsInput">Aさん
+Bさん
+Cさん
+Dさん
+Eさん</textarea>
+        </div>
+        <div class="input-group">
+            <label for="themesInput">お題 (1行に1つ)</label>
+            <textarea id="themesInput">お題１
+お題２
+お題３
+お題４
+お題５</textarea>
+        </div>
+        <div class="input-group">
+            <button id="updateButton" style="margin-top: 25px;">盤面を更新</button>
+        </div>
+    </div>
+    
     <canvas id="rouletteCanvas" width="500" height="500"></canvas>
     
     <div class="controls">
-        <button id="setupButton">ゲーム準備 (結果シャッフル)</button>
+        <button id="setupButton" disabled>ゲーム準備 (結果シャッフル)</button>
         <button id="spinButton" disabled>抽選スタート</button>
     </div>
 
     <div id="resultArea">
-        <p>「ゲーム準備」ボタンを押して、被らない組み合わせを作成してください。</p>
+        <p>「盤面を更新」ボタンを押して、入力内容を適用してください。</p>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- ⚙️ 設定 (ここを編集してください) ---
-            const participants = ["参加者A", "参加者B", "参加者C", "参加者D", "参加者E"];
-            const themes = ["お題1", "お題2", "お題3", "お題4", "お題5"];
+            // --- 🎨 設定 ---
             // ルーレットの扇形の色
-            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#54A0FF', '#9B59B6', '#F0932B', '#EB4D4B'];
-            // ------------------------------------
+            const COLORS = ['#FFD700', '#FF6B6B', '#4ECDC4', '#54A0FF', '#9B59B6', '#F0932B', '#EB4D4B', '#2ECC71', '#3498DB', '#E67E22'];
+            // ------------------
 
             // --- DOM要素 ---
             const canvas = document.getElementById('rouletteCanvas');
             const ctx = canvas.getContext('2d');
+            const participantsInput = document.getElementById('participantsInput');
+            const themesInput = document.getElementById('themesInput');
+            const updateButton = document.getElementById('updateButton');
             const setupButton = document.getElementById('setupButton');
             const spinButton = document.getElementById('spinButton');
             const resultArea = document.getElementById('resultArea');
 
             // --- 変数 ---
-            const numParticipants = participants.length;
-            if (numParticipants !== themes.length) {
-                alert("参加者の数とお題の数が一致しません！設定を修正してください。");
-                return;
-            }
-
+            let participants = [];
+            let themes = [];
+            let numItems = 0;
             let mapping = []; // [参加者インデックス] -> お題インデックス の組み合わせ
             let currentAngle = 0; // 現在の回転角度 (ラジアン)
+            
             const PI2 = Math.PI * 2;
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const radius = canvas.width / 2 - 20; // 矢印のために少し内側に
+            const radius = canvas.width / 2 - 25; // 矢印のために少し内側に
 
             // --- イベントリスナー ---
+            updateButton.addEventListener('click', updateGameData);
             setupButton.addEventListener('click', setupGame);
             spinButton.addEventListener('click', startSpinning);
 
             /**
-             * 1. ゲームのセットアップ（被らない組み合わせの生成）
+             * 1. 入力値を取得し、ゲームデータを更新
+             */
+            function updateGameData() {
+                // 改行で分割し、空行を除去
+                participants = participantsInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                themes = themesInput.value.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+                numItems = participants.length;
+
+                if (numItems === 0) {
+                    resultArea.innerHTML = `<p style="color: red;">参加者またはお題を入力してください。</p>`;
+                    setupButton.disabled = true;
+                    spinButton.disabled = true;
+                    return;
+                }
+
+                if (numItems !== themes.length) {
+                    resultArea.innerHTML = `<p style="color: red;">⚠️ 参加者 (${numItems}人) とお題 (${themes.length}個) の数が一致しません！</p>`;
+                    setupButton.disabled = true;
+                    spinButton.disabled = true;
+                    return;
+                }
+                
+                // データの整合性が取れたら、盤面描画と準備ボタンを有効化
+                resultArea.innerHTML = `<p>データ更新完了！ (${numItems}人/${numItems}個) 「ゲーム準備」を押してください。</p>`;
+                setupButton.disabled = false;
+                spinButton.disabled = true;
+                currentAngle = 0; // 盤面をリセット
+                initialDraw();
+            }
+            
+            /**
+             * 2. ゲームのセットアップ（被らない組み合わせの生成）
              */
             function setupGame() {
-                mapping = createDerangement(numParticipants);
+                // 人数が多すぎると完全攪乱の生成が難しくなるため、警告
+                if (numItems > 10) {
+                    resultArea.innerHTML = `<p style="color: orange;">⚠ 参加者が多すぎると「被らない組み合わせ」の生成に時間がかかるか失敗することがあります。</p>`;
+                }
+
+                mapping = createDerangement(numItems);
                 if (!mapping) {
                     resultArea.innerHTML = `<p style="color: red;">エラー: 被らない組み合わせの生成に失敗しました。再試行してください。</p>`;
                     return;
                 }
                 
                 resultArea.innerHTML = "<p>準備完了！「抽選スタート」を押してください。</p>";
-                console.log("生成されたマッピング (参加者i -> お題j):", mapping);
                 
                 spinButton.disabled = false;
                 setupButton.disabled = true; // 準備は1回だけ
+                updateButton.disabled = true; // 抽選中は変更不可
             }
             
             /**
-             * 2. 完全攪乱（i != array[i]）の配列を生成
+             * 3. 完全攪乱（i != array[i]）の配列を生成
              */
             function createDerangement(n) {
                 let arr = Array.from({length: n}, (_, i) => i);
                 let attempts = 0;
                 
-                while (attempts < 1000) { // 試行回数を増やす
+                while (attempts < 10000) { // 試行回数を大幅に増やす
                     // Fisher-Yates シャッフル
                     for (let i = arr.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
@@ -168,13 +255,15 @@
             }
 
             /**
-             * 3. ルーレット盤面を描画
+             * 4. ルーレット盤面を描画
              */
             function drawRoulette(angle) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const arcSize = PI2 / numParticipants; // 1区画の角度
+                if (numItems === 0) return;
+                
+                const arcSize = PI2 / numItems; // 1区画の角度
 
-                for (let i = 0; i < numParticipants; i++) {
+                for (let i = 0; i < numItems; i++) {
                     ctx.beginPath();
                     const startAngle = angle + i * arcSize;
                     const endAngle = startAngle + arcSize;
@@ -184,7 +273,7 @@
                     ctx.arc(centerX, centerY, radius, startAngle, endAngle);
                     ctx.closePath();
                     
-                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.fillStyle = COLORS[i % COLORS.length];
                     ctx.fill();
                     ctx.strokeStyle = '#333';
                     ctx.lineWidth = 2;
@@ -209,15 +298,16 @@
             }
 
             /**
-             * 4. 矢印を描画 (常に固定)
+             * 5. 矢印を描画 (常に固定)
              */
             function drawArrow() {
+                // 矢印
                 ctx.fillStyle = '#E74C3C'; // 目立つ赤色
                 ctx.beginPath();
                 // 矢印の先端をルーレット盤の真上に
-                ctx.moveTo(centerX, centerY - radius - 15);
-                ctx.lineTo(centerX - 10, centerY - radius - 5);
-                ctx.lineTo(centerX + 10, centerY - radius - 5);
+                ctx.moveTo(centerX, centerY - radius - 20);
+                ctx.lineTo(centerX - 12, centerY - radius - 5);
+                ctx.lineTo(centerX + 12, centerY - radius - 5);
                 ctx.closePath();
                 ctx.fill();
                 
@@ -229,49 +319,60 @@
             }
 
             /**
-             * 5. 抽選スタート（一人ずつアニメーション）
+             * 6. 抽選スタート（一人ずつアニメーション）
              */
             async function startSpinning() {
                 spinButton.disabled = true;
+                updateButton.disabled = true;
                 resultArea.innerHTML = ""; // 結果表示エリアをリセット
                 
-                for (let i = 0; i < numParticipants; i++) {
+                for (let i = 0; i < numItems; i++) {
+                    const participant = participants[i];
                     // 参加者iが当たるべきお題のインデックス
                     const targetThemeIndex = mapping[i]; 
+                    const targetTheme = themes[targetThemeIndex];
                     
-                    resultArea.innerHTML += `<p><strong>${participants[i]}</strong> の番です... </p>`;
+                    resultArea.innerHTML += `<p><strong>${participant}</strong> の番です... </p>`;
                     
                     // アニメーション実行
                     await animateSpin(targetThemeIndex);
                     
                     // 結果を確定して表示
                     const resultP = resultArea.querySelector('p:last-child');
-                    resultP.innerHTML = `<strong>${participants[i]}</strong> は <strong>${themes[targetThemeIndex]}</strong> に決定！`;
+                    resultP.innerHTML = `✅ <strong>${participant}</strong> は <strong>${targetTheme}</strong> に決定！`;
                     
                     await sleep(1500); // 次の人までの待機時間
                 }
                 
                 resultArea.innerHTML += "<h3>全員の抽選が完了しました！</h3>";
                 setupButton.disabled = false; // 再度準備できるようにする
+                updateButton.disabled = false;
             }
 
             /**
-             * 6. 1回分のスピンアニメーション
+             * 7. 1回分のスピンアニメーション（角度修正済み）
              */
             function animateSpin(targetIndex) {
                 return new Promise(resolve => {
-                    const arcSize = PI2 / numParticipants;
+                    const arcSize = PI2 / numItems;
                     
-                    // 停止目標角度（矢印（真上）に、お題セクターの中央が来る角度）
-                    // 真上は -PI/2 (270度)
-                    let targetAngle = - (targetIndex * arcSize + arcSize / 2) + (Math.PI / 2);
+                    // --- 🎯 停止目標角度の計算 (重要) ---
+                    // 矢印は上向き(Y軸マイナス方向)。canvas座標系では、真上が -PI/2 です。
+                    // ターゲットの扇形の中央が -PI/2 に来るように角度を計算します。
+                    // ターゲットセクターの角度: [targetIndex * arcSize, (targetIndex + 1) * arcSize]
+                    // ターゲットセクターの中央: targetIndex * arcSize + arcSize / 2
                     
-                    // ランダムなオフセットを追加して停止位置を微調整
-                    targetAngle -= (Math.random() * 0.6 - 0.3) * arcSize; 
+                    // 回転後の角度を0として、そこから逆算して必要な回転角度を求めます。
+                    // 真上が0度になるように調整します。（描画関数の仕様に合わせる）
+                    let targetSectorCenter = targetIndex * arcSize + arcSize / 2;
+                    let angleToCenter = PI2 - targetSectorCenter; // 中央を真下（PI/2）から真上（-PI/2）へ移動させる
+                    
+                    // 停止角度にランダムなオフセットを追加（見た目のランダム性）
+                    angleToCenter += (Math.random() * 0.4 - 0.2) * arcSize; // セクター内で微調整
                     
                     // 最低でも5回転はさせる
-                    const totalRotation = PI2 * (5 + Math.random() * 2);
-                    const finalAngle = targetAngle + totalRotation;
+                    const minRotations = 5;
+                    const finalAngle = angleToCenter + PI2 * minRotations;
                     
                     const duration = 5000; // アニメーション時間 (5秒)
                     const startTime = performance.now();
@@ -300,7 +401,7 @@
                             requestAnimationFrame(animate);
                         } else {
                             // アニメーション終了
-                            currentAngle = finalAngle; // 最終角度に固定
+                            currentAngle = finalAngle % PI2; // 最終角度を0〜2PIの間に正規化して保持
                             resolve();
                         }
                     }
@@ -316,11 +417,11 @@
                 return new Promise(resolve => setTimeout(resolve, ms));
             }
 
-            // --- 初期描画 ---
-            initialDraw();
+            // --- 初期化処理 ---
+            updateGameData(); // 読み込み時にデフォルトの入力値で一度更新・描画
             
             function initialDraw() {
-                drawRoulette(0); // 0度の状態で初期描画
+                drawRoulette(currentAngle); 
                 drawArrow();
             }
         });
