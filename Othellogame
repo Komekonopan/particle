@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>オセロ - OTHELLO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: 'Lora', serif;
+        background: linear-gradient(135deg, #0f172a 0%, #0f1728 50%, #1e293b 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .container {
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .title {
+        font-family: 'Cinzel', serif;
+        font-size: 40px;
+        font-weight: bold;
+        background: linear-gradient(90deg, #fcd34d, #fef08a, #fef3c7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 0.15em;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        color: #cbd5e1;
+        font-size: 13px;
+        letter-spacing: 0.1em;
+    }
+
+    .info-panel {
+        background: rgba(30, 41, 59, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .score-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .score-box {
+        font-family: 'Cinzel', serif;
+        text-align: center;
+        letter-spacing: 0.05em;
+    }
+
+    .score-number {
+        font-size: 28px;
+        font-weight: bold;
+        color: #fef08a;
+        margin-bottom: 4px;
+    }
+
+    .score-box.ai .score-number {
+        color: #bfdbfe;
+    }
+
+    .score-label {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 4px;
+        margin-bottom: 8px;
+    }
+
+    .piece-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin: 8px auto 0;
+        border: 2px solid #cbd5e1;
+    }
+
+    .piece-indicator.black {
+        background-color: #000;
+    }
+
+    .piece-indicator.white {
+        background-color: #fff;
+    }
+
+    .current-turn {
+        text-align: center;
+        padding-top: 12px;
+        border-top: 1px solid rgba(71, 85, 105, 0.3);
+    }
+
+    .turn-label {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-bottom: 4px;
+    }
+
+    .turn-text {
+        font-family: 'Cinzel', serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fef08a;
+    }
+
+    .turn-text.ai {
+        color: #bfdbfe;
+    }
+
+    .board-wrapper {
+        background: rgba(20, 50, 50, 0.2);
+        border: 2px solid #059669;
+        border-radius: 8px;
+        padding: 4px;
+        margin-bottom: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .board {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+        background-color: #0f172a;
+        padding: 8px;
+        border-radius: 4px;
+    }
+
+    .cell {
+        aspect-ratio: 1;
+        background: linear-gradient(180deg, #166534 0%, #15803d 100%);
+        border: 1px solid rgba(5, 150, 105, 0.3);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .cell:hover {
+        transform: scale(1.05);
+    }
+
+    .cell.valid-move {
+        background: rgba(5, 167, 107, 0.5);
+    }
+
+    .valid-indicator {
+        width: 8px;
+        height: 8px;
+        background-color: #86efac;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+        position: absolute;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 0.4;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+    }
+
+    .piece {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid;
+        animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .piece.black {
+        background-color: #000;
+        border-color: #475569;
+    }
+
+    .piece.white {
+        background-color: #fff;
+        border-color: #cbd5e1;
+    }
+
+    @keyframes popIn {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .button-container {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 12px 16px;
+        font-family: 'Lora', serif;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        letter-spacing: 0.05em;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(90deg, #b45309 0%, #ca8a04 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(180, 83, 9, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(180, 83, 9, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: scale(0.95);
+    }
+
+    .game-over-panel {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(71, 85, 105, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        display: none;
+    }
+
+    .game-over-panel.show {
+        display: block;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .game-over-label {
+        color: #94a3b8;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .game-over-result {
+        font-family: 'Cinzel', serif;
+        font-size: 20px;
+        font-weight: bold;
+        color: #fef08a;
+    }
+
+    .game-over-result.lose {
+        color: #bfdbfe;
+    }
+
+    .game-over-result.draw {
+        color: #fcd34d;
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">OTHELLO</div>
+            <div class="subtitle">you vs AI</div>
+        </div>
+
+```
+    <div class="info-panel">
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score-number" id="scoreBlack">2</div>
+                <div class="score-label">YOUR PIECES</div>
+                <div class="piece-indicator black"></div>
+            </div>
+            <div class="score-box ai">
+                <div class="score-number" id="scoreWhite">2</div>
+                <div class="score-label">AI PIECES</div>
+                <div class="piece-indicator white"></div>
+            </div>
+        </div>
+
+        <div class="current-turn">
+            <div class="turn-label">CURRENT</div>
+            <div class="turn-text" id="turnText">YOUR TURN</div>
+        </div>
+    </div>
+
+    <div class="board-wrapper">
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="button-container">
+        <button class="btn btn-primary" onclick="initializeGame()">
+            ↻ NEW GAME
+        </button>
+    </div>
+
+    <div class="game-over-panel" id="gameOverPanel">
+        <div class="game-over-label">GAME OVER</div>
+        <div class="game-over-result" id="gameOverResult">YOU WIN!</div>
+    </div>
+</div>
+
+<script>
+    let board = [];
+    let validMoves = [];
+    let currentPlayer = 'black';
+    let gameOver = false;
+    let isAIThinking = false;
+
+    const DIRECTIONS = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1],           [0, 1],
+        [1, -1],  [1, 0],  [1, 1]
+    ];
+
+    function initializeGame() {
+        board = Array(8).fill(null).map(() => Array(8).fill(null));
+        board[3][3] = 'white';
+        board[3][4] = 'black';
+        board[4][3] = 'black';
+        board[4][4] = 'white';
+
+        currentPlayer = 'black';
+        gameOver = false;
+        isAIThinking = false;
+        validMoves = [];
+
+        document.getElementById('gameOverPanel').classList.remove('show');
+        renderBoard();
+        updateScores();
+        updateValidMoves();
+    }
+
+    function renderBoard() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${i}-${j}`;
+
+                const isValid = validMoves.some(([r, c]) => r === i && c === j);
+                if (isValid) {
+                    cell.classList.add('valid-move');
+                }
+
+                if (board[i][j]) {
+                    const piece = document.createElement('div');
+                    piece.className = `piece ${board[i][j]}`;
+                    cell.appendChild(piece);
+                } else if (isValid) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'valid-indicator';
+                    cell.appendChild(indicator);
+                }
+
+                cell.onclick = () => playerMove(i, j);
+                boardEl.appendChild(cell);
+            }
+        }
+    }
+
+    function getValidMoves(b, color) {
+        const moves = [];
+        const opponent = color === 'black' ? 'white' : 'black';
+
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                if (b[i][j] !== null) continue;
+
+                let isValid = false;
+                for (const [di, dj] of DIRECTIONS) {
+                    let ni = i + di, nj = j + dj;
+                    let foundOpponent = false;
+
+                    while (ni >= 0 && ni < 8 && nj >= 0 && nj < 8) {
+                        if (b[ni][nj] === null) break;
+                        if (b[ni][nj] === opponent) {
+                            foundOpponent = true;
+                        } else if (b[ni][nj] === color && foundOpponent) {
+                            isValid = true;
+                            break;
+                        } else {
+                            break;
+                        }
+                        ni += di;
+                        nj += dj;
+                    }
+                    if (isValid) break;
+                }
+
+                if (isValid) moves.push([i, j]);
+            }
+        }
+        return moves;
+    }
+
+    function flipPieces(b, row, col, color) {
+        const newBoard = b.map(r => [...r]);
+        const opponent = color === 'black' ? 'white' : 'black';
+
+        newBoard[row][col] = color;
+
+        for (const [di, dj] of DIRECTIONS) {
+            let ni = row + di, nj = col + dj;
+            const toFlip = [];
+
+            while (ni >= 0 && ni < 8 && nj >= 0 && nj < 8 && newBoard[ni][nj] === opponent) {
+                toFlip.push([ni, nj]);
+                ni += di;
+                nj += dj;
+            }
+
+            if (ni >= 0 && ni < 8 && nj >= 0 && nj < 8 && newBoard[ni][nj] === color) {
+                toFlip.forEach(([fi, fj]) => {
+                    newBoard[fi][fj] = color;
+                });
+            }
+        }
+
+        return newBoard;
+    }
+
+    function countPieces() {
+        let black = 0, white = 0;
+        for (let i = 0; i < 8; i++) {
+            for (let j = 0; j < 8; j++) {
+                if (board[i][j] === 'black') black++;
+                if (board[i][j] === 'white') white++;
+            }
+        }
+        return { black, white };
+    }
+
+    function updateScores() {
+        const { black, white } = countPieces();
+        document.getElementById('scoreBlack').textContent = black;
+        document.getElementById('scoreWhite').textContent = white;
+    }
+
+    function updateValidMoves() {
+        validMoves = getValidMoves(board, currentPlayer);
+
+        if (validMoves.length === 0) {
+            const opponent = currentPlayer === 'black' ? 'white' : 'black';
+            const opponentMoves = getValidMoves(board, opponent);
+
+            if (opponentMoves.length === 0) {
+                endGame();
+                return;
+            }
+
+            currentPlayer = opponent;
+            updateValidMoves();
+            return;
+        }
+
+        updateTurnDisplay();
+        renderBoard();
+    }
+
+    function updateTurnDisplay() {
+        const turnText = document.getElementById('turnText');
+        if (isAIThinking) {
+            turnText.textContent = 'AI THINKING';
+            turnText.className = 'turn-text ai';
+        } else if (currentPlayer === 'black') {
+            turnText.textContent = 'YOUR TURN';
+            turnText.className = 'turn-text';
+        } else {
+            turnText.textContent = 'AI THINKING';
+            turnText.className = 'turn-text ai';
+        }
+    }
+
+    function playerMove(row, col) {
+        if (gameOver || currentPlayer !== 'black' || isAIThinking) return;
+        if (!validMoves.some(([r, c]) => r === row && c === col)) return;
+
+        board = flipPieces(board, row, col, 'black');
+        updateScores();
+        currentPlayer = 'white';
+        renderBoard();
+
+        setTimeout(makeAIMove, 600);
+    }
+
+    function makeAIMove() {
+        if (gameOver) return;
+
+        isAIThinking = true;
+        updateTurnDisplay();
+
+        const aiMoves = getValidMoves(board, 'white');
+
+        if (aiMoves.length === 0) {
+            currentPlayer = 'black';
+            updateValidMoves();
+            isAIThinking = false;
+            updateTurnDisplay();
+            return;
+        }
+
+        const [row, col] = aiMoves[Math.floor(Math.random() * aiMoves.length)];
+        board = flipPieces(board, row, col, 'white');
+        updateScores();
+        currentPlayer = 'black';
+
+        isAIThinking = false;
+        updateValidMoves();
+    }
+
+    function endGame() {
+        gameOver = true;
+        const { black, white } = countPieces();
+        const resultEl = document.getElementById('gameOverResult');
+        const panelEl = document.getElementById('gameOverPanel');
+
+        if (black > white) {
+            resultEl.textContent = 'YOU WIN!';
+            resultEl.className = 'game-over-result';
+        } else if (black < white) {
+            resultEl.textContent = 'AI WINS';
+            resultEl.className = 'game-over-result lose';
+        } else {
+            resultEl.textContent = 'DRAW';
+            resultEl.className = 'game-over-result draw';
+        }
+
+        panelEl.classList.add('show');
+    }
+
+    // Initialize on load
+    initializeGame();
+</script>
+```
+
+</body>
+</html>
